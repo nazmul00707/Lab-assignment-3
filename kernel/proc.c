@@ -209,6 +209,9 @@ growproc(int n)
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
+// Create a new process copying p as the parent.
+// Sets up stack to return as if from system call.
+// Caller must set state of returned proc to RUNNABLE.
 int
 fork(void)
 {
@@ -227,9 +230,9 @@ fork(void)
     return -1;
   }
   np->sz = proc->sz;
+  np->tickets = proc->tickets; 
   np->parent = proc;
   *np->tf = *proc->tf;
-
 
   /* The following code is added by haoda le and netid hxl180046
   **when forking, the child will have the same number of tickets as its parent
