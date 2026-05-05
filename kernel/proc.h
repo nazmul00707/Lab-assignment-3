@@ -65,6 +65,7 @@ struct context {
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
+// Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
   pde_t* pgdir;                // Page table
@@ -84,9 +85,10 @@ struct proc {
   // PS
   int inuse;// If it's being run by a CPU or not
   int ticks;// How many ticks has accumulated
+  
   // Lottery
-  int tickets;
-
+  int tickets;                 // Process tickets
+  int rounds;                  // Number of rounds executed 
 };
 
 // Process memory is laid out contiguously, low addresses first:
