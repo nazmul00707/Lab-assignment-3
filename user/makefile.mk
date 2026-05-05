@@ -28,7 +28,8 @@ USER_PROGS := \
 	setticket\
 	stress_manylow\
 	grapher1\
-	zombie
+	zombie\
+	test_scheduler
 
 
 USER_PROGS := $(addprefix user/, $(USER_PROGS))
