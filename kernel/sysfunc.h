@@ -1,5 +1,6 @@
 #ifndef _SYSFUNC_H_
 #define _SYSFUNC_H_
+#define SYS_settickets 22
 
 // System call handlers
 int sys_chdir(void);
