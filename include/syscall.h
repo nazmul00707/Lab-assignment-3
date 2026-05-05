@@ -1,5 +1,6 @@
 #ifndef _SYSCALL_H_
 #define _SYSCALL_H_
+#define SYS_settickets 22
 
 // System call numbers
 #define SYS_fork    1
