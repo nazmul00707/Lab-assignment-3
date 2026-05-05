@@ -349,117 +349,57 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
+// Per-CPU process scheduler.
 void
 scheduler(void)
 {
   struct proc *p;
 
-
-  /* The following code is added by haoda le and netid hxl180046
-  **Set init's tickets to 1
-  */
-  acquire(&ptable.lock);
-  setproctickets(ptable.proc, 1);
-  release(&ptable.lock);
-  /* End of code added */
-
-
-  /* The following code is added by haoda le and netid hxl180046
-  **Seed random
-  */
-  static _Bool have_seeded = 0;
-  const int seed = 1323;
-  if(!have_seeded)
-    {
-      srand(seed);
-      have_seeded = 1;
-    }
-  /* End of code added */
-    
-    
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
+    acquire(&ptable.lock); // x86 এ প্রসেস টেবিল স্ক্যান করার আগে একবার লক করতে হয়
 
-    /* The following code is added by haoda le and netid hxl180046
-    **use random to create the winning ticket 
-    */
-      const int golden_ticket =	rand()%(total_tickets + 1);
-      int ticket_count = 0;
-    /* End of code added */
-
-      
-      // Loop over process table looking for process to run.
-      acquire(&ptable.lock);
-      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-	if(p->state != RUNNABLE)
-          
-	  {
-	    //ticket counting
-          #ifndef STORE_TICKETS_ON_SLEEP
-	    ticket_count += p->tickets;
-          #endif
-          
-        
-	    continue;
-	  }
-      
-
-	/* The following code is added by haoda le and netid hxl180046
-	**find the lottery ticket
-	*/
-        ticket_count += p->tickets;
-        if(ticket_count < golden_ticket)
-	  {
-            continue;
-	  }
-        else if(ticket_count> total_tickets)
-	  cprintf("Extra: %d | %d | %d\n", ticket_count, total_tickets, golden_ticket);
-	/* End of code added */
-
-        
-        
-	// Switch to chosen process.  It is the process's job
-	// to release ptable.lock and then reacquire it
-	// before jumping back to us.
-	proc = p;
-	switchuvm(p);
-	p->state = RUNNING;
-        
-        
-	/* The following code is added by haoda le and netid hxl180046 
-	**Start timing 
-	*/
-        p->inuse = 1;
-        const int tickstart = ticks;
-	/* End of code added */        
-        
-
-	swtch(&cpu->scheduler, proc->context);
-        
-        
-	/* The following code is added by haoda le and netid hxl180046 
-	**Record ticks
-        */
-        p->ticks += ticks - tickstart;
-        //p->inuse = 0;
-        /* End of code added */
-
-        
-	switchkvm();
-
-	// Process is done running for now.
-	// It should have changed its p->state before coming back.
-	proc = 0;
-        
-        break;
+    int total_tickets = 0;
+    // Step 1: Compute total tickets
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if(p->state == RUNNABLE) {
+        total_tickets += p->tickets;
       }
-      release(&ptable.lock);
+    }
 
+    if(total_tickets > 0) {
+      // Step 2: Draw a winning number [0, total_tickets - 1]
+      int winning = rand() % total_tickets; 
+      int current_ticket_count = 0;
+
+      // Step 3: Find the winning process and run it
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if(p->state == RUNNABLE) {
+          current_ticket_count += p->tickets;
+          
+          if(current_ticket_count > winning) {
+            p->rounds++; // Increase rounds by 1
+            
+            // Switch to chosen process
+            proc = p;
+            switchuvm(p);
+            p->state = RUNNING;
+            
+            swtch(&cpu->scheduler, proc->context); // x86 context switch
+            
+            switchkvm();
+            proc = 0;
+            
+            break; // Switch to the selected process and break the inner loop
+          }
+        }
+      }
+    }
+    release(&ptable.lock);
   }
 }
-
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state.
 void
