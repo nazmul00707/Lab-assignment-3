@@ -156,6 +156,7 @@ allocproc(void)
 }
 
 // Set up first user process.
+// Set up first user process.
 void
 userinit(void)
 {
@@ -181,10 +182,10 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
+  p->tickets = 10;       // <--- এই লাইনটি এখানে যোগ করবেন
   p->state = RUNNABLE;
   release(&ptable.lock);
 }
-
 // Grow current process's memory by n bytes.
 // Return 0 on success, -1 on failure.
 int
