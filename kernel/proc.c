@@ -29,38 +29,29 @@ pinit(void)
 **Random function. 
 **create a random number to pick the tickets for next running process
 */
-static uint Q[4096], c = 362436;
+/* Pseudorandom generator added for Lottery Scheduler Task 3 */
+unsigned long rand_next = 1;
 
-void srand(uint x)
+int
+do_rand(unsigned long *ctx)
 {
-  int i;
-
-  Q[0] = x;
-  Q[1] = x + PHI;
-  Q[2] = x + PHI + PHI;
-
-  for (i = 3; i < 4096; i++)
-    Q[i] = Q[i - 3] ^ Q[i - 2] ^ PHI ^ i;
+  long hi, lo, x;
+  x = (*ctx % 0x7ffffffe) + 1;
+  hi = x / 127773;
+  lo = x % 127773;
+  x = 16807 * lo - 2836 * hi;
+  if (x < 0)
+    x += 0x7fffffff;
+  *ctx = x;
+  return (x);
 }
 
-uint rand(void)
+int
+rand(void)
 {
-  if(sizeof(unsigned long long) != 8){
-    return 0;
-  }
-  unsigned long long t, a = 18782LL;
-  static uint i = 4095;
-  uint x, r = 0xfffffffe;
-  i = (i + 1) & 4095;
-  t = a * Q[i] + c;
-  c = (t >> 32);
-  x = t + c;
-  if (x < c) {
-    x++;
-    c++;
-  }
-  return (Q[i] = r - x);
+  return (do_rand(&rand_next));
 }
+/* End of Pseudorandom generator */
 /* End of code added*/
 
 
